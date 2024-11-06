@@ -1,6 +1,9 @@
 # Automation of a Claims Process with Generative AI
 
-Retrieve data from GitHub : https://github.com/atracordis/lemans-courses-share
+Retrieve data from GitHub : 
+```
+git clone https://github.com/atracordis/lemans-courses-share
+```
 
 Install libraries :
 
@@ -19,7 +22,7 @@ Install libraries :
   ```
 - Optional: install pillow if image handling or display issues occur
   ```
-  pip install pillow  -- For image processing (used implicitly by some functions in PyMuPDF)
+  pip install pillow  # For image processing (used implicitly by some functions in PyMuPDF)
   ```
 
 Launch Ollama chatbot :
