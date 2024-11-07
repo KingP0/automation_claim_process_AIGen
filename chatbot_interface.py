@@ -61,7 +61,7 @@ Provide concise, direct answers with short explanations on analysis limitations.
 """
 
 # Input chatbot
-user_input = st.text_input("Ask Ollama about the accident:")
+user_input = st.text_input("Ask Ollama about the claim :")
 
 if user_input:
     full_text = f"{context}\n\nIncident Text: {database[selected_pdf]['fnol_text']}\n\nContract Text: {database[selected_pdf]['contract_text']}\n\nQuestion: {user_input}"
