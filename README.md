@@ -9,20 +9,20 @@ Install libraries :
 
 - PDF and Image handling
   ```
-  pip install pymupdf  # For working with PDFs (PyMuPDF library)
+  pip install pymupdf
   ```
 - Streamlit for web-based interface
   ```
-  pip install streamlit  # For building interactive interfaces
+  pip install streamlit
   ```
 - LangChain and Ollama model integration
   ```
-  pip install langchain  # LangChain for LLM integration
-  pip install langchain_community  # Community-contributed integrations for LangChain
+  pip install langchain
+  pip install langchain_community
   ```
 - Optional: install pillow if image handling or display issues occur
   ```
-  pip install pillow  # For image processing (used implicitly by some functions in PyMuPDF)
+  pip install pillow
   ```
 
 Launch Ollama chatbot :
