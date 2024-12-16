@@ -50,23 +50,32 @@ st.title("Ollama Sinistre Verification Chatbot")
 selected_pdf = st.selectbox("Select a PDF file to analyze:", list(database.keys()))
 
 # Subheader
-st.subheader("Chat with Ollama")
+st.subheader("Ollama Response")
 
 # Context for ollama
 context = """
 You are an assistant specialized in assessing insurance claims based on textual and visual evidence.
 Your task is to verify the plausibility of the claim by comparing the reported incident details (FNOL text) and the insurance contract
 with the images provided. Look for inconsistencies or missing information in relation to the incident's description.
-Provide concise, direct answers with short explanations on analysis limitations.
+Provide concise, direct answers.
 """
 
-# Input chatbot
-user_input = st.text_input("Ask Ollama about the claim :")
+# # Input chatbot
+# user_input = st.text_input("Ask Ollama about the claim :")
 
-if user_input:
-    full_text = f"{context}\n\nIncident Text: {database[selected_pdf]['fnol_text']}\n\nContract Text: {database[selected_pdf]['contract_text']}\n\nQuestion: {user_input}"
+# if user_input:
+#     full_text = f"{context}\n\nIncident Text: {database[selected_pdf]['fnol_text']}\n\nContract Text: {database[selected_pdf]['contract_text']}\n\nQuestion: {user_input}"
+#     response = model.invoke(full_text)
+#     st.write("Ollama's Response:", response)
+
+if selected_pdf:
+    
+    auto_generated_question = "Can you assess the plausibility of the reported incident by checking the FNOL details, associated images, and ensure that it is covered by the insurance ?"
+
+    full_text = f"{context}\n\nIncident Text: {database[selected_pdf]['fnol_text']}\n\nContract Text: {database[selected_pdf]['contract_text']}\n\nQuestion: {auto_generated_question}"
     response = model.invoke(full_text)
-    st.write("Ollama's Response:", response)
+
+    st.write(response)
     
 # Show content
 if selected_pdf:
