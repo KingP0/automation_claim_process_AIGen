@@ -14,7 +14,6 @@ IMAGE_FOLDER = "images/"
 # Ensure image folder exists
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-
 # --- Utility Functions ---
 def extract_data_from_pdf(pdf_path):
     """Extracts text and images from a PDF file."""
@@ -65,7 +64,8 @@ def format_context(fnol_text, contract_text, image_paths, question):
 
 
 # --- Streamlit Interface ---
-st.title("Ollama Sinistre Verification")
+st.set_page_config(page_title="GENAI Claim Automatisation", layout="wide")
+st.title("Automation of a Claim Process with GENAI")
 
 # Select PDFs to extract
 pdf_files = [file for file in os.listdir(PDF_FOLDER_PATH) if file.endswith(".pdf")]
@@ -87,30 +87,35 @@ else:
 # Analyze selected PDF
 if database:
     selected_pdf = st.selectbox("Select a PDF file to analyze:", list(database.keys()))
+
+    col1, col2, col3 = st.columns(3)
     if selected_pdf:
         pdf_data = database[selected_pdf]
         fnol_text = pdf_data["fnol_text"]
         contract_text = pdf_data["contract_text"]
         
-        # Display FNOL Text
-        st.subheader("FNOL Text")
-        updated_fnol_text = st.text_area("Edit FNOL Text:", value=fnol_text, height=500)
+        with col1:
+            # Display FNOL Text
+            st.subheader("FNOL Text")
+            updated_fnol_text = st.text_area("Edit FNOL Text:", value=fnol_text, height=400)
 
-        # Update FNOL text
-        if st.button("Update FNOL Text"):
-            database[selected_pdf]["fnol_text"] = updated_fnol_text
-            st.success("FNOL text updated.")
+            # Update FNOL text
+            if st.button("Update FNOL Text"):
+                database[selected_pdf]["fnol_text"] = updated_fnol_text
+                st.success("FNOL text updated.")
 
-        # Display contract text and images
-        st.subheader("Contract Text")
-        st.write(contract_text)
+        with col2:
+            # Display contract text and images
+            st.subheader("Contract Text")
+            st.write(contract_text)
 
-        st.subheader("Incident Images")
-        for img_path in pdf_data["images"]:
-            st.image(img_path)
+        with col3:
+            st.subheader("Incident Images")
+            for img_path in pdf_data["images"]:
+                st.image(img_path)
 
         # Response Type
-        st.subheader("Ollama Response")
+        st.subheader(f"{MODEL} Response")
         response_type = st.selectbox("Select Response Type:", [
             "Plausibility Check",
             "Coverage Insurance Matching"
@@ -128,4 +133,4 @@ if database:
                 question
             )
             response = model.invoke(context)
-            st.write("Ollama's Response:", response)
+            st.write(f"{MODEL}'s Response:", response)
