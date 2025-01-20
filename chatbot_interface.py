@@ -45,9 +45,8 @@ def format_context(fnol_text, contract_text, image_paths, question):
     images_section = "\n".join(image_paths) if image_paths else "No images available."
     return f"""
     You are an assistant specialized in assessing insurance claims based on textual and visual evidence.
-    Your task is to verify the plausibility of the claim by comparing the reported incident details (FNOL text) and the insurance contract
-    with the images provided. Look for inconsistencies or missing information in relation to the incident's description.
-    The answers should be as concise as possible, focusing on the key elements that support your decision. (Max. 50 characters)
+    Look for inconsistencies or missing information in relation to the incident's description.
+    The answers should be as concise as possible, focusing on the key elements that support your decision. (Use few words, 1-2 sentences)
 
     Incident Text:
     {fnol_text}
@@ -69,18 +68,22 @@ st.title("Automation of a Claim Process with GENAI")
 
 # Select PDFs to extract
 pdf_files = [file for file in os.listdir(PDF_FOLDER_PATH) if file.endswith(".pdf")]
+if "selected_pdfs" not in st.session_state:
+    st.session_state.selected_pdfs = []
+
 if st.button("Select All PDFs"):
-    selected_pdfs = pdf_files
+    st.session_state.selected_pdfs = pdf_files
 else:
-    selected_pdfs = st.multiselect("Select PDF file(s) to extract:", pdf_files)
+    if st.session_state.selected_pdfs != pdf_files:
+        st.session_state.selected_pdfs = st.multiselect("Select PDF file(s) to extract:", pdf_files, default=st.session_state.selected_pdfs)
 
 # Extract and display data
 database = {}
-if selected_pdfs:
-    for pdf_file in selected_pdfs:
+if st.session_state.selected_pdfs:
+    for pdf_file in st.session_state.selected_pdfs:
         pdf_path = os.path.join(PDF_FOLDER_PATH, pdf_file)
         database[pdf_file] = extract_data_from_pdf(pdf_path)
-    st.success(f"Extracted data from {len(selected_pdfs)} PDF(s).")
+    st.success(f"Extracted data from {len(st.session_state.selected_pdfs)} PDF(s).")
 else:
     st.warning("Please select at least one PDF to extract.")
 
@@ -123,7 +126,7 @@ if database:
 
         # Generate and display response
         if st.button("Generate Response"):
-            question = "Can you assess the plausibility of the reported incident based on the provided information and image?" \
+            question = "Can you assess the plausibility of the reported incident based on the provided FNOL information and image?" \
                 if response_type == "Plausibility Check" else \
                 "Does the incident align with the terms of the insurance contract?"
             context = format_context(
