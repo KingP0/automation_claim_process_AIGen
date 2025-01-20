@@ -48,6 +48,7 @@ def format_context(fnol_text, contract_text, image_paths, question):
     You are an assistant specialized in assessing insurance claims based on textual and visual evidence.
     Your task is to verify the plausibility of the claim by comparing the reported incident details (FNOL text) and the insurance contract
     with the images provided. Look for inconsistencies or missing information in relation to the incident's description.
+    The answers should be as concise as possible, focusing on the key elements that support your decision. (Max. 50 characters)
 
     Incident Text:
     {fnol_text}
