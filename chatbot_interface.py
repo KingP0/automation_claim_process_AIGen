@@ -105,7 +105,7 @@ def format_context(fnol_text, contract_text, image_paths, question, predicted_ca
 
 # --- Streamlit Interface ---
 st.set_page_config(page_title="GenAI Claim Automatisation", layout="wide")
-st.title("Automation of a Claim Process with GenAI")
+st.markdown('<h1 style="color:#6a0dad;">Automation of a Claim Process with GenAI</h1>', unsafe_allow_html=True)
 
 # Select PDFs to extract
 pdf_files = [file for file in os.listdir(PDF_FOLDER_PATH) if file.endswith(".pdf")]
@@ -140,24 +140,25 @@ if database:
 
         with col1:
             # Display FNOL Text
-            st.subheader("FNOL Text")
-            updated_fnol_text = st.text_area("Edit FNOL Text:", value=fnol_text, height=500)
+            st.markdown('<h3 style="color:#6a0dad;">FNOL Text</h3>', unsafe_allow_html=True)
+            updated_fnol_text = st.text_area("", value=fnol_text, height=500)
 
         with col2:
             # Display contract text
-            st.subheader("Contract Text")
-            st.write(contract_text)
+            st.markdown('<h3 style="color:#6a0dad;">Contract Text</h3>', unsafe_allow_html=True)
+            st.text_area("", value=contract_text, height=500, disabled=True)
 
         with col3:
-            st.subheader("Incident Images")
+            st.markdown('<h3 style="color:#6a0dad;">Incident Images</h3>', unsafe_allow_html=True)
+            st.markdown("<br><br>", unsafe_allow_html=True) # Add space
             for img_path in pdf_data["images"]:
                 st.image(img_path)
                 description = describe_image_with_clip(img_path)
-                st.write("Image Description:")
+                st.write("Image Description using CLIP:")
                 st.write(description)
 
         # Response Type
-        st.subheader(f"{MODEL} Response")
+        st.markdown(f'<h3 style="color:#6a0dad;">{MODEL} Response</h3>', unsafe_allow_html=True)
         response_type = st.selectbox("Select Response Type:", [
             "Plausibility Check",
             "Coverage Insurance Matching"
