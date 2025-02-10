@@ -1,19 +1,30 @@
 import os
 import time
+import json
 import fitz  # PyMuPDF
 import streamlit as st
+from sentence_transformers import SentenceTransformer, util
+from PIL import Image
+from transformers import CLIPProcessor, CLIPModel
 from langchain_community.llms.ollama import Ollama
+import torch
+from torch.nn.functional import softmax
 
 # Init Ollama model
 MODEL = "llava-phi3"  # LLaVA for text and image analysis
 model = Ollama(model=MODEL, temperature=0)
 
-# PDF folder path
+# Paths
 PDF_FOLDER_PATH = "lemans-courses-share/claims/"
 IMAGE_FOLDER = "images/"
 
-# Ensure image folder exists
+# Ensure folders exist
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
+
+# Load embedding model and CLIP model
+embedder = SentenceTransformer("all-MiniLM-L6-v2")
+clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 # --- Utility Functions ---
 def extract_data_from_pdf(pdf_path):
@@ -40,24 +51,44 @@ def extract_data_from_pdf(pdf_path):
         "images": images
     }
 
+def describe_image_with_clip(image_path):
+    """Classifies an image into vehicle categories using CLIP."""
+    image = Image.open(image_path).convert("RGB")
+    prompts = [
+        "Vehicle: helicopter",
+        "Vehicle: airplane",
+        "Vehicle: glider"
+    ]
+    
+    # Prepare inputs for CLIP
+    inputs = clip_processor(text=prompts, images=image, return_tensors="pt", padding=True)
+    outputs = clip_model(**inputs)
+    
+    # Score normalization
+    logits_per_image = outputs.logits_per_image[0]
+    probabilities = softmax(logits_per_image, dim=0)  # Convert to probabilities
 
-def format_context(fnol_text, contract_text, image_paths, question):
-    """Formats the context to include text and image references."""
+    # Select the most probable category
+    best_index = torch.argmax(probabilities).item()
+    best_category = prompts[best_index].split(": ")[1]
+    best_score = probabilities[best_index].item()
+
+    return f"Predicted category: {best_category} (Confidence: {best_score:.2f})"
+
+def format_context(fnol_text, contract_text, image_paths, question, predicted_category=None):
+    """Formats the context to prepare the prompt."""
     images_section = "\n".join(image_paths) if image_paths else "No images available."
     return f"""
     Role: You are an assistant specialized in evaluating insurance claims using textual and visual evidence.
 
     Objective:
-    1. Assess the provided evidence for consistency and accuracy regarding the incident description.
-    2. Answer the given questions concisely, focusing on key elements that support your decision.
-
-    Guidelines:
-    - Responses must only indicate whether the information is right or wrong based on the evidence provided.
-    - Do not highlight missing information from the text or images.
-    - Be lenient when assessing images, as they may be poorly taken. If at least one correct element is identifiable, even if minimal, it is sufficient.
-    (e.g., the right vehicle is shown, it is the right vehicle model or similar, etc.)
-    - Provide answers as "Yes" or "No" to indicate your conclusion.
-
+    Assess the provided evidence for consistency and accuracy regarding the incident description.
+    The response needs to take a side (yes/no) and provide a brief justification based on the evidence.
+    
+    Category : HELI or Gyro (for helicopter), AIR or PLANE (for airplane) and GLI (for glider)
+    When assessing the images, you only need to consider analyzing the vehicle type.
+    Compare with detected Vehicle Category : {predicted_category}
+    
     Incident Text:
     {fnol_text}
 
@@ -106,19 +137,14 @@ if database:
         pdf_data = database[selected_pdf]
         fnol_text = pdf_data["fnol_text"]
         contract_text = pdf_data["contract_text"]
-        
+
         with col1:
             # Display FNOL Text
             st.subheader("FNOL Text")
-            updated_fnol_text = st.text_area("Edit FNOL Text:", value=fnol_text, height=400)
-
-            # Update FNOL text
-            if st.button("Update FNOL Text"):
-                database[selected_pdf]["fnol_text"] = updated_fnol_text
-                st.success("FNOL text updated.")
+            updated_fnol_text = st.text_area("Edit FNOL Text:", value=fnol_text, height=500)
 
         with col2:
-            # Display contract text and images
+            # Display contract text
             st.subheader("Contract Text")
             st.write(contract_text)
 
@@ -126,6 +152,9 @@ if database:
             st.subheader("Incident Images")
             for img_path in pdf_data["images"]:
                 st.image(img_path)
+                description = describe_image_with_clip(img_path)
+                st.write("Image Description:")
+                st.write(description)
 
         # Response Type
         st.subheader(f"{MODEL} Response")
@@ -136,19 +165,24 @@ if database:
 
         # Generate and display response
         if st.button("Generate Response"):
-            question = "Can you assess the plausibility of the reported incident based on the provided FNOL information and image (without checking contract)? (1 sentence)" \
+            question = "Does the aircraft category mentioned in the FNOL match the detected vehicle type in the image? Respond with 'Yes' or 'No'. If 'No', briefly state the detected vehicle type. Do not consider insurance coverage. (max 1 sentence)" \
                 if response_type == "Plausibility Check" else \
-                "Does the incident align with the terms of the insurance contract based on the FNOL and contract text? (1 sentence)"
+                "Does the incident align with the terms of the insurance contract based on the FNOL and contract text (If the cause of damage is covered by contract)? (max 1 sentence)"
+            
+            predicted_category = describe_image_with_clip(img_path)
+            
             context = format_context(
                 updated_fnol_text,
                 contract_text,
                 pdf_data["images"],
-                question
+                question,
+                predicted_category
             )
+            
             start_time = time.time()
             response = model.invoke(context)
             end_time = time.time()
             response_time = end_time - start_time
-            
+
             st.write(f"Response Time: {response_time:.2f} seconds")
             st.write(f"{MODEL}'s Response:", response)
