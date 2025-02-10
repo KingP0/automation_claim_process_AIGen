@@ -2,27 +2,19 @@
 
 Retrieve data from GitHub : 
 ```
-git clone https://github.com/atracordis/lemans-courses-share
+git clone https://github.com/atracordis/lemans-courses-share.git
+```
+Clone this repository :
+```
+git clone https://github.com/KingP0/automation_claim_process_AIGen.git
 ```
 
 Install libraries :
-
-- PDF and Image handling
   ```
-  pip install pymupdf
-  ```
-- Streamlit for web-based interface
-  ```
-  pip install streamlit
-  ```
-- LangChain and Ollama model integration
-  ```
-  pip install langchain
-  pip install langchain_community
-  ```
-- Optional: install pillow if image handling or display issues occur
-  ```
-  pip install pillow
+  python -m venv venv
+  source venv/bin/activate  # Sur Mac/Linux
+  venv\Scripts\activate  # Sur Windows
+  pip install -r automation_claim_process_AIGen/requirements.txt
   ```
 
 Launch Ollama chatbot :
