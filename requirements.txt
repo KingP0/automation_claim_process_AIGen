@@ -1,0 +1,8 @@
+streamlit
+pymupdf
+sentence-transformers
+torch
+transformers
+Pillow
+langchain-community
+ollama
