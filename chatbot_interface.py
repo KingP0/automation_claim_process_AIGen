@@ -168,7 +168,7 @@ if database:
         predicted_category = describe_image_with_clip(img_path)
         
         if st.button("Generate Response"):
-            question = f"Does the aircraft category mentioned in the FNOL match the detected vehicle type {predicted_category}? Respond with 'Yes' or 'No'. If 'No', briefly state the detected vehicle type. Do not consider insurance coverage. AIR is for airplane, GLI is for glider, and GYRO and HELI is for helicopter. (max 1 sentence)" \
+            question = f"Does the aircraft category mentioned in the FNOL {updated_fnol_text} match the detected vehicle type {predicted_category}? Respond with 'Yes' or 'No'. If 'No', briefly state the detected vehicle type. Do not consider insurance coverage. AIR is for airplane, GLI is for glider, and GYRO and HELI is for helicopter. (max 1 sentence)" \
                 if response_type == "Plausibility Check" else \
                 "Does the incident align with the terms of the insurance contract based on the FNOL and contract text (If the cause of damage is covered by contract)? (max 1 sentence)"
             
