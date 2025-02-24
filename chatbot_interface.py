@@ -9,6 +9,7 @@ from transformers import CLIPProcessor, CLIPModel
 from langchain_community.llms.ollama import Ollama
 import torch
 from torch.nn.functional import softmax
+import base64  # For PDF encoding
 
 # Init Ollama model
 MODEL = "llava-phi3"  # LLaVA for text and image analysis
@@ -102,6 +103,11 @@ def format_context(fnol_text, contract_text, image_paths, question, predicted_ca
     {question}
     """
 
+# Function to encode PDF to base64 and create a downloadable/viewable link
+def get_pdf_base64(pdf_path):
+    with open(pdf_path, "rb") as pdf_file:
+        encoded_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
+    return encoded_pdf
 
 # --- Streamlit Interface ---
 st.set_page_config(page_title="GenAI Claim Automatisation", layout="wide")
@@ -131,6 +137,12 @@ else:
 # Analyze selected PDF
 if database:
     selected_pdf = st.selectbox("Select a PDF file to analyze:", list(database.keys()))
+    
+    if selected_pdf:
+        pdf_path = os.path.join(PDF_FOLDER_PATH, selected_pdf)
+        encoded_pdf = get_pdf_base64(pdf_path)
+        pdf_display = f'<a href="data:application/pdf;base64,{encoded_pdf}" target="_blank" style="color:#6a0dad;">View Raw PDF</a>'
+        st.markdown(pdf_display, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
     if selected_pdf:
@@ -170,7 +182,7 @@ if database:
         if st.button("Generate Response"):
             question = f"Does the aircraft category mentioned in the FNOL {updated_fnol_text} match the detected vehicle type {predicted_category}? Respond with 'Yes' or 'No'. If 'No', briefly state the detected vehicle type. Do not consider insurance coverage. AIR is for airplane, GLI is for glider, and GYRO and HELI is for helicopter. (max 1 sentence)" \
                 if response_type == "Plausibility Check" else \
-                "Does the incident align with the terms of the insurance contract based on the FNOL and contract text (If the cause of damage is covered by contract)? (max 1 sentence)"
+                f"Does the incident align with the terms of the insurance contract based on the FNOL {updated_fnol_text} and contract text {contract_text} (If the cause of damage is covered by the contract by looking for similarities)? (max 1 sentence)"
             
             context = format_context(
                 updated_fnol_text,
