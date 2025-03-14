@@ -12,7 +12,7 @@ from torch.nn.functional import softmax
 import base64  # For PDF encoding
 
 # Init Ollama model
-MODEL = "llava-phi3"  # LLaVA for text and image analysis
+MODEL = "llava-phi3"
 model = Ollama(model=MODEL, temperature=0)
 
 # Paths
@@ -109,6 +109,18 @@ def get_pdf_base64(pdf_path):
         encoded_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
     return encoded_pdf
 
+# Function to auto scroll to a section
+def auto_scroll_to_section(section_name):
+    js = f"""
+        <script>
+            function scroll_to(section) {{
+                document.getElementById(section).scrollIntoView();
+            }}
+            window.location.href = '#{section_name}';
+        </script>
+    """
+    st.markdown(js, unsafe_allow_html=True)
+
 # --- Streamlit Interface ---
 st.set_page_config(page_title="GenAI Claim Automatisation", layout="wide")
 st.markdown('<h1 style="color:#6a0dad;">Automation of a Claim Process with GenAI</h1>', unsafe_allow_html=True)
@@ -136,7 +148,7 @@ else:
 
 # Analyze selected PDF
 if database:
-    selected_pdf = st.selectbox("Select a PDF file to analyze:", list(database.keys()))
+    selected_pdf = st.selectbox("Select a PDF file to analyze:", [""] + list(database.keys()))
     
     if selected_pdf:
         pdf_path = os.path.join(PDF_FOLDER_PATH, selected_pdf)
@@ -146,6 +158,7 @@ if database:
 
     col1, col2, col3 = st.columns(3)
     if selected_pdf:
+        auto_scroll_to_section("fnol-text")
         pdf_data = database[selected_pdf]
         fnol_text = pdf_data["fnol_text"]
         contract_text = pdf_data["contract_text"]
@@ -182,7 +195,7 @@ if database:
         if st.button("Generate Response"):
             question = f"Does the aircraft category mentioned in the FNOL {updated_fnol_text} match the detected vehicle type {predicted_category}? Respond with 'Yes' or 'No'. If 'No', briefly state the detected vehicle type. Do not consider insurance coverage. AIR is for airplane, GLI is for glider, and GYRO and HELI is for helicopter. (max 1 sentence)" \
                 if response_type == "Plausibility Check" else \
-                f"Does the incident align with the terms of the insurance contract based on the FNOL {updated_fnol_text} and contract text {contract_text} (If the cause of damage is covered by the contract by looking for similarities)? (max 1 sentence)"
+                f"Does the incident align with the terms of the insurance contract based on the FNOL {updated_fnol_text} and contract text {contract_text} (If the cause of damage is covered by the contract by looking for similarities)? Respond with 'Yes' or 'No'. If 'No', briefly state the cause of damage. (entence)"
             
             context = format_context(
                 updated_fnol_text,
@@ -197,5 +210,10 @@ if database:
             end_time = time.time()
             response_time = end_time - start_time
 
+            # Format the response
+            response_parts = response.strip().split(' ', 1)
+            automated_response = response_parts[0].rstrip(',') if response_parts else "N/A"
+
             st.write(f"Response Time: {response_time:.2f} seconds")
-            st.write(f"{MODEL}'s Response:", response)
+            st.write("Automated Response:", automated_response)
+            st.write("Details:", response) # For human review
