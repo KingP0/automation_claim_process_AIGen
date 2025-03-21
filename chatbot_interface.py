@@ -102,6 +102,8 @@ def format_context(fnol_text, contract_text, image_paths, question, predicted_ca
 
     Question:
     {question}
+    
+    Instruction : Don't repeat the question in the response.
     """
 
 # Function to encode PDF to base64 and create a downloadable/viewable link
